@@ -27,7 +27,7 @@ else % train the model and save it
     
     % train SVM
     Mdl = fitcsvm(X,labels);
-    save SVMmodel.mat Mdl; 
+    save SVMmodel.mat Mdl;
 end
 
 % test data is our GAN generated data
@@ -61,10 +61,34 @@ fprintf('SVM was fooled by the generated data %d percent of times!',accuracy);
 Zall = load('C:\Users\n01388138\Documents\MATLAB\GAN tests\Training data\training data\Data + Images\SampleData32x32_3000.mat');
 ZMatrix = zeros(32,32,3000);
 for c=1:3000
-        Z = Zall(1,1).TD{c,1}.Z;
-        Z = reshape(Z,32,32);
-        Z = Z.';
-        ZMatrix(:,:,c) = Z;
+    Z = TD{c,1}.Z;
+    Z = reshape(Z,32,32);
+    Z = Z.';
+    ZMatrix(:,:,c) = Z;
+end
+
+% plot here in a tile
+figure();
+filename = strcat('Training Data Samples');
+t = tiledlayout(2,2,'TileSpacing','Compact');
+title(t,filename);
+for j = 1:1:4
+    nexttile
+    surf(ZMatrix(:,:,j),'EdgeColor','None');
+    view(2);
+    hold on
+    set(gca,'xtick',[],'ytick',[])
+    savefig("Generated Data of Epoch 200");
+    
+    scale=2;
+    paperunits='centimeters';
+    filewidth=7.5;%cm
+    fileheight=5.5;%cm
+    res=300;%resolution
+    size=[filewidth fileheight]*scale;
+    set(gcf,'paperunits',paperunits,'paperposition',[0 0 size]);
+    set(gcf, 'PaperSize', size);
+    %saveas(gcf,filename,'pdf');
 end
 
 % verify training data
@@ -84,3 +108,32 @@ title('Yt: With Noise');
 figure(3);
 surf(used); view(2);
 title('Usedin Training');
+
+%% plot generated data
+load('32x32_3000 - FS 5 - NoF 32 - E 1000 - MBS 128 - Original Loss - Data.mat');
+Z = gather(dlXGNArray);
+for epoch = 1:1:10
+    figure();
+    filename = strcat('Generated Data (Epoch ',num2str(epoch*100),')');
+    t = tiledlayout(2,2,'TileSpacing','Compact');
+    title(t,filename);
+    for j = 1:1:4
+        nexttile
+        surf(Z(:,:,epoch,j),'EdgeColor','None');
+        view(2);
+        hold on
+        set(gca,'xtick',[],'ytick',[])
+        savefig("Generated Data of Epoch 200");
+        
+        scale=2;
+        paperunits='centimeters';
+        filewidth=7.5;%cm
+        fileheight=5.5;%cm
+        res=300;%resolution
+        size=[filewidth fileheight]*scale;
+        set(gcf,'paperunits',paperunits,'paperposition',[0 0 size]);
+        set(gcf, 'PaperSize', size);
+        %saveas(gcf,filename,'pdf');
+    end
+end
+
