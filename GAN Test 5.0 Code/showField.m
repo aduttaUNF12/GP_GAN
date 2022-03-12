@@ -1,6 +1,8 @@
 function showField(GP,Z,tStr,zHat)
 % function showField(GP,Z,tStr,zHat)
 
+if nargin < 4, zHat = nan(size(Z)); end
+
 plot(GP.Coord(:,1),GP.Coord(:,2),'k.');
 axis equal; xlabel('x'); ylabel('y'); title(tStr);
 delta = diff(GP.Coord(1:2,1));
@@ -14,9 +16,9 @@ for i = 1:length(ZBar)
         [GP.Coord(i,2)-delta/2,GP.Coord(i,2)+delta/2,GP.Coord(i,2)+delta/2,GP.Coord(i,2)-delta/2],theCol);
   if ~isnan(GP.Value(i))
     hold on; plot(GP.Coord(i,1),GP.Coord(i,2),'k.'); hold off; 
-  else
-  theCol = [1 0 1] - [1 0 0]*2*max(0.5-zHatBar(i),0) - [0 0 1]*2*max(zHatBar(i)-0.5,0);
-    patch([GP.Coord(i,1)-delta/4,GP.Coord(i,1)-delta/4,GP.Coord(i,1)+delta/4,GP.Coord(i,1)+delta/4],...
-          [GP.Coord(i,2)-delta/4,GP.Coord(i,2)+delta/4,GP.Coord(i,2)+delta/4,GP.Coord(i,2)-delta/4],theCol);    
+  elseif ~isnan(zHatBar(i))
+    theCol = [1 0 1] - [1 0 0]*2*max(0.5-zHatBar(i),0) - [0 0 1]*2*max(zHatBar(i)-0.5,0);
+      patch([GP.Coord(i,1)-delta/4,GP.Coord(i,1)-delta/4,GP.Coord(i,1)+delta/4,GP.Coord(i,1)+delta/4],...
+            [GP.Coord(i,2)-delta/4,GP.Coord(i,2)+delta/4,GP.Coord(i,2)+delta/4,GP.Coord(i,2)-delta/4],theCol);    
   end
 end
