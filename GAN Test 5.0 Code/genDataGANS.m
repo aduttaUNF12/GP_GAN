@@ -2,19 +2,26 @@
 clear all;
 
 % Gaussian process parameters
-M = 64; N = 64; beta = 1.0; ell = 1.0; % see generateGP.m
+M = 32; N = 32; beta = 1.0; ell = 1.0; % see generateGP.m
+%mumix = []; % Unstructured (zero) mean
+mumix = [5,0.5,0.25,0.25,0.5,0; -5,0.5,0.75,0.25,0.5,0]; % Cool-top/Hot-bottom mean
+%mumix = rand(2+randi(5),6); mumix(:,1) = 5*beta*(2*mumix(:,1)-1);
+%mumix(:,4:5) = mumix(:,4:5)*ell/2; 
+%mumix(:,6) = (2*mumix(:,6)-1).*sqrt(prod(mumix(:,4:5),2));
 sigma_n = 0.5; % standard deviation of zero-mean sensor noise
+
 % Path planning parameters
 B = 30;        % budget (positive integer)
 gamma = 0.0;   % in unit interval (0 = full exploitation & 1 = full exploration)
 s = [2,3];     % start cell as 2-D index == 1-D index of (s(2)-1)*M + s(1)
+
 % Run parameters
-D = 100;       % Number of data sets to generate (1 runs interactively with
-             %                                  fixed starting location)
+D = 3000;       % Number of data sets to generate (1 runs interactively with
+                %                                  fixed starting location)
 if D > 1
-  GP = generateGP(M,N,[beta; ell]);
+  GP = generateGP(M,N,[beta; ell],false,mumix);
 else
-  figure(1); GP = generateGP(M,N,[beta; ell],true);
+  figure(1); GP = generateGP(M,N,[beta; ell],true,mumix);
 end
 
 % Initialize environment & path
@@ -74,15 +81,13 @@ for d = 1:D
   TD{d}.Y = Y; % length-MN measurement vector (linearly indexed into grid)
   TD{d}.P = P; % length-K path (sequence of linear indices)
   TD{d}.J = J; % length-K metrics [RMSE EntropyBnd Entropy]
-  TD{d}.test = rot90(reshape(TD{d}.Y, [], 32)); %32x32 array
-
 end
 gans.GP = GP;
 gans.PP = [B sigma_n gamma s];
 gans.TD = TD;
-
-save('SampleData64x64_100.mat', "TD");
-
-% The measurement field of the dth experiment is in TD{d}.Y
-% -- It is a length-MN column vector
+% The measurement field of the dth experiment is in TD{d}.Y, while the
+% state field of the dth experiment is in Td{d}.Z
+% -- They are both length-MN column vectors
 % -- GP.Coord gives the corresponding (horz/vert) coordinates into grid
+% Please follow the following convention to convert into 2D grid e.g., 
+% -- Yin2D = rot90(reshape(TD{d}.Y,[],32))
