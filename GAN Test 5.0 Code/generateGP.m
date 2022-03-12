@@ -1,4 +1,4 @@
-function GP = generateGP(M,N,phi,DEBUG)
+function GP = generateGP(M,N,phi,DEBUG,mumix)
 %function GP = generateGP(M,N,phi)
 %   M     % the number of cells in the horizontal dimension
 %   N     % the number of cells in the vertical dimension
@@ -19,6 +19,7 @@ function GP = generateGP(M,N,phi,DEBUG)
 %   Value % a length-(M*N) vector of known cell values, initialized as NaN
 
 % Set default values
+if nargin < 5, mumix = []; end
 if nargin < 4, DEBUG = false; end
 if nargin < 3, phi = [1; 1]; end
 if nargin < 2, N = M; end
@@ -50,17 +51,36 @@ if phi(1) > 0
     end
   end
 end
+Mu = zeros(n,1);
+% Input MUMIX is also optional (with default value of []) and denotes the 
+% Gaussian mixture parameters to construct a non-zero mean-field (i.e., 
+% mean vector Mu). Specifically, each r'th row of MUMIX corresponds to a 
+% component bivariate Gaussian PDF over the 2-D region
+%   -- centered at mean vector MUMIX(r,2:3)';
+%   -- rotated by covariance matrix [MUMIX(r,4), MUMIX(r,6); MUMIX(r,6), MUMIX(r,5)]; and 
+%   -- weighted by MUMIX(r,1)
+% The mean field becomes the sum of these weighted bell curves.
+for c = 1:size(mumix,1)
+  wc = mumix(c,1); mc = mumix(c,2:3)'; s12 = prod(mumix(c,4:6)); 
+  Kc = inv(diag(mumix(c,4:5).^2) + s12*fliplr(eye(2)));
+  for i = 1:n
+    iPos = [xC(i); yC(i)];
+    Mu(i) = Mu(i) + wc*exp(-0.5*(iPos-mc)'*Kc*(iPos-mc));
+  end
+end
 
 GP.Param = [M;N;phi];
+GP.MuMix = mumix;
 GP.Coord = [xC(:) yC(:)];
 GP.Sigma = Sigma;
-GP.Mu = zeros(n,1);
+GP.Mu = Mu;
 GP.Value = nan(n,1);
 % Some visualizations for debugging
 if DEBUG
-  subplot(2,2,1); plot(GP.Coord(:,1),GP.Coord(:,2),'k.');
+  subplot(2,2,1); showField(GP,GP.Mu,'temp');
+  hold on; plot(GP.Coord(:,1),GP.Coord(:,2),'k.');
   axis equal; xlabel('x'); ylabel('y'); 
-  title('Spatial Coordinates (cell centers)');
+  title('Mean Field (and cell centers)');
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %Visualization uses the following variables above, but via GP are
   %  M = GP.Param(1); N = GP.Param(2); phi = GP.Param(3:4); 
@@ -76,6 +96,7 @@ if DEBUG
        'HorizontalAlignment','center','VerticalAlignment','bottom');
   text(GP.Coord(n,1),GP.Coord(n,2),num2str(n),'Color',[1 0 0],...
        'HorizontalAlignment','center','VerticalAlignment','bottom');
+  hold off;
   subplot(2,2,3); d = linspace(0,min([1,5*phi(2)]),1001);
   plot(d,phi(2)^2*exp(-d/phi(1)),'k-');
   xlabel('relative distance'); ylabel('pairwise covariance'); 
